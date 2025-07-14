@@ -1,0 +1,32 @@
+Thank you for using dinosaurs_!
+
+EACH TOP-DOWN SPRITE SHEET HAS AN UPWARDS FACING [UP] AND DOWNWARDS FACING [DOWN] VERSION
+
+
+Stuff to know - Sprite-Sheets
+
+Character Sprites
+
+- Each row of the sprite-sheet is a different animation
+- Each animation frame is 24x24 pixels
+
+All animations are listed on the webpage https://analogstudios.itch.io/dinosaurs
+
+Item Sprites
+
+- Each item sprite is 8x8 pixels
+
+
+Stuff to know - UI
+
+Profiles
+
+- Each Character Profile is 16x16 pixels
+
+Hunger Icons
+
+- Each Hunger Icon is 8x8 pixels
+
+
+
+...if you have any questions or requests you can contact us at kevinsmomshouse@gmail.com
