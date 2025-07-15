@@ -40,3 +40,4 @@ for i in range (1,101):
     myi = str(i)
     if myi.find('3') !=-1 :
         print({i})
+# i guess "find" function is acted only in string

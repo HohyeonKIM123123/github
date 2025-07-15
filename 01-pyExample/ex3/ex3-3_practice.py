@@ -54,7 +54,8 @@ for i in range(1, 10):
     print(f'3 X {i} = {3 * i}')
 
 
-
+for i in range(1,100):
+    print(f"7 x {i} = {7*i}")
 #5
 
 number = int(input('자릿수를 파악할 수를 넣어주세요'))
@@ -66,3 +67,5 @@ while True :
     count += 1
 
 print(f'자릿수는{count}입니다.')
+
+
