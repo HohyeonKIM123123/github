@@ -1,97 +1,38 @@
+# ex01.py
+
+# 1. 멜론에 접속, 
+# 2. 가수 이름 타이핑.
+# 3. 곡 목록 10개를 각 SongNames songname으로 저장장 
+# 4. 유튜브에 접속, 각 songname에 대해 첫번째 영상 링크를 땀.
+# 5. 영상 링크를 mp3전환 사이트에 붙여넣고 
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
 import time
-import csv
-from datetime import datetime
-import urllib.parse
 
-def crawl_han():
-    """한경글로벌 마켓 크롤링"""
-    
-    # Chrome 설정
-    options = Options()
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    
-    driver = webdriver.Chrome(options=options)
-    
-    try:
-        print("🚀 한경글로벌마켓 크롤링 시작...")
-        
-        # 1. 한경 메인 페이지 접속
-        print("📰 한경 메인 페이지 접속 중...")
-        driver.get("https://www.hankyung.com/globalmarket/news-globalmarket")
-        time.sleep(3)
-        
-        # 뉴스 링크 수집
-        news_list = []                           
-        
-        # HTML 문서에서 모든 <a> 태그를 선택함
-        links = driver.find_elements(By.XPATH, "//ul[@class='news-list']/li//h2[@class='news-tit']/a")
-        
-        for i, link in enumerate(links[:10]):  # 상위 10개만
-            try:
-                title = link.text.strip()
-                url = link.get_attribute('href')
-                
-                # 이미지 URL 추출
-                try:
-                    img_el = link.find_element(By.XPATH, ".//ancestor::li//img")
-                    img_url = img_el.get_attribute("src")
-                    
-                    # 이미지 URL을 디코딩하여 추출된 링크를 실제 이미지 링크로
-                    img_url = urllib.parse.unquote(img_url)  # 디코딩 처리
-                except Exception as e:
-                    img_url = "이미지 없음"
-                    print(f"⚠️ 이미지 URL 추출 실패: {e}")
-                
-                if title and url and len(title) > 10:  # 유효한 제목만
-                    news_list.append({
-                        'image': img_url,
-                        'index': len(news_list) + 1,
-                        'title': title,
-                        'link': url,
-                        'time': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    })
-                    print(f"📰 [{len(news_list)}] {title[:50]}... (이미지: {img_url})")
-            except Exception as e:
-                print(f"⚠️ 뉴스 항목 처리 실패: {e}")
-                continue
-        
-        return news_list
-        
-    except Exception as e:
-        print(f"❌ 에러: {e}")
-        return []
-    finally:
-        driver.quit()
 
-def save_csv(news_list):
-    """CSV 파일 저장"""
-    if not news_list:
-        print("❌ 저장할 데이터가 없습니다.")
-        return
-    
-    filename = f"it_news_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
-    
-    with open(filename, 'w', newline='', encoding='utf-8-sig') as f:
-        writer = csv.DictWriter(f, fieldnames=['index', 'title', 'link', 'image', 'time'])
-        writer.writeheader()
-        writer.writerows(news_list)  # 각 항목을 한 줄씩 저장
-    
-    print(f"✅ 저장완료: {filename} ({len(news_list)}개)")
+singer_name = input("가수 이름을 입력하세요 : ")
+# 크롬 드라이버 멜론으로 경로 지정
+driver = webdriver.Chrome()
+driver.get("https://www.melon.com/")
+print("브라우저가 열렸습니다.")
 
-def main():
-    # 크롤링 실행
-    news = crawl_han()
-    
-    # 결과 출력
-    if news:
-        print(f"\n📊 총 {len(news)}개 뉴스 수집완료!")
-        save_csv(news)
-    else:
-        print("❌ 뉴스를 가져올 수 없습니다.")
+search_box = driver.find_element(By.ID, "top_search")  #serching for name="q"  cus that is the search tab
+search_box.send_keys(singer_name)  #google detect and think it as a computer cus it's sooo fast 
+search_box.send_keys(Keys.RETURN)
 
-if __name__ == "__main__":
-    main()
+time.sleep(10000)
+
+# 4. 곡 제목 10개 수집
+song_elements = driver.find_elements(By.CSS_SELECTOR, "a.fc_gray")
+song_names = [elem.text for elem in song_elements[:10]]
+
+# 5. 반복문으로 song_name 하나씩 처리
+for i, song_name in enumerate(song_names, 1):
+    print(f"{i}. {song_name}")
+
+print(f"{i}. {song_name}")
+time.sleep(10000)
+# driver.quit()
+# print("브라우저가 닫혔습니다")
