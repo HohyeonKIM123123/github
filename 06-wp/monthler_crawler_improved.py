@@ -53,18 +53,22 @@ def crawl_monthler_real(max_count=100):
             try:
                 html = card.get_attribute('outerHTML') or ""
                 soup = BeautifulSoup(html, 'html.parser')
+                
                 # 숙소명
                 name = soup.find('h4') or soup.find('h3') or soup.find('h5') or soup.find('strong')
                 name = name.get_text(strip=True) if name else f"숙소 {i+1}"
+                
                 # 이미지
                 img = soup.find('img')
                 img_url = img['src'] if img and isinstance(img, Tag) and img.has_attr('src') else ""
                 if str(img_url).startswith('/'):
                     img_url = f"https://www.monthler.kr{img_url}"
+                
                 # D-day, 지원자수, 지역(카드에서)
                 dday = None
                 applicants = None
                 region = ""
+                
                 dday_elem = soup.find('span', class_=re.compile('ProgramCard_dday'))
                 if dday_elem:
                     dday_text = dday_elem.get_text(strip=True)
@@ -72,95 +76,59 @@ def crawl_monthler_real(max_count=100):
                         dday = extract_int(dday_text)
                     elif '마감' in dday_text:
                         dday = 0
+                
                 applicants_elem = soup.find('div', class_=re.compile('ProgramCard_applicantsNumber'))
                 if applicants_elem:
                     applicants = extract_int(applicants_elem.get_text())
+                
                 region_elem = soup.find('p', class_=re.compile('ProgramCard_txt_detail'))
                 if region_elem:
                     region = region_elem.get_text(strip=True)
-                # robust 팝업 닫기
-                for _ in range(5):
-                    try:
-                        close_btns = driver.find_elements(By.CSS_SELECTOR, ".fixed.z-50 [class*=close], .fixed.z-50 button, .fixed.z-50 [role=button], .fixed.z-50, .fixed.z-50 [class*=Close], .fixed.z-50 [class*=닫기]")
-                        for btn in close_btns:
-                            if btn.is_displayed():
-                                try:
-                                    btn.click()
-                                    time.sleep(0.3)
-                                except Exception:
-                                    pass
-                        if not driver.find_elements(By.CSS_SELECTOR, ".fixed.z-50"):
-                            break
-                    except Exception:
-                        break
-                    time.sleep(0.2)
-                # robust 카드 클릭 (여러 번 재시도)
-                click_success = False
-                for _ in range(3):
-                    try:
-                        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", card)
-                        time.sleep(0.2)
-                        card.click()
-                        click_success = True
-                        break
-                    except Exception as e:
-                        time.sleep(0.5)
-                if not click_success:
-                    print(f"카드 {i+1} 클릭 실패: {name}")
-                    continue
-                # 상세페이지 주요 요소가 뜰 때까지 명확히 대기
-                try:
-                    WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.CSS_SELECTOR, "#Detail_program_detail__SPpKX"))
-                    )
-                except Exception as e:
-                    print(f"카드 {i+1} 상세페이지 로딩 실패: {name}, 에러: {e}")
-                    driver.back()
-                    time.sleep(1.5)
-                    continue
-                time.sleep(1.0)
-                # 상세페이지 정보 robust하게 추출
-                detail_html = driver.page_source
-                detail_soup = BeautifulSoup(detail_html, 'html.parser')
-                # 카테고리
-                cat_div = detail_soup.find('div', class_='text-sm pt-0 leading-3')
+                
+                # 카드에서 추가 정보 추출
+                모집기간 = ""
+                모집인원 = ""
+                활동기간 = ""
+                지원금 = ""
                 카테고리 = ""
-                if cat_div and isinstance(cat_div, Tag) and '카테고리' in cat_div.get_text():
-                    span = cat_div.find('span')
-                    카테고리 = span.get_text(strip=True) if span else ""
-                # 상세설명
-                desc_elem = detail_soup.find('h3')
-                상세설명 = desc_elem.get_text(strip=True) if desc_elem else ""
-                # 활동기간, 모집인원, 모집기간, 지원금 등
-                모집기간, 모집인원, 활동기간, 지원금 = "", "", "", ""
-                for div in detail_soup.find_all('div', class_=re.compile('Detail_info_container')):
-                    txt = div.get_text(" ", strip=True)
-                    if '활동기간' in txt:
-                        활동기간 = txt.split('활동기간 :')[-1].strip()
-                    elif '모집인원' in txt:
-                        모집인원 = txt.split('모집인원 :')[-1].strip()
-                    elif '모집기간' in txt:
-                        모집기간 = txt.split('모집기간 :')[-1].strip()
-                    elif '지원금' in txt or '최대지원금' in txt:
-                        지원금 = txt.split(':')[-1].strip()
-                for strong in detail_soup.find_all('strong'):
-                    if '지원' in strong.get_text():
-                        지원금 += " / " + strong.get_text(strip=True)
-                연락처 = ""
-                for div in detail_soup.find_all('div', class_=re.compile('text-sm')):
-                    if '이메일' in div.get_text() or '전화' in div.get_text():
-                        연락처 += div.get_text(" ", strip=True) + " "
+                상세설명 = ""
+                
+                # 지원금 정보 찾기 (ProgramCard_txt_subsidy 클래스)
+                subsidy_elem = soup.find('div', class_=re.compile('ProgramCard_txt_subsidy'))
+                if subsidy_elem:
+                    지원금 = subsidy_elem.get_text(strip=True)
+                
+                # 모집기간 찾기 (ProgramCard_txt_detail 클래스 중 날짜 패턴)
+                detail_elems = soup.find_all('div', class_=re.compile('ProgramCard_txt_detail'))
+                for elem in detail_elems:
+                    text = elem.get_text(strip=True)
+                    if re.search(r'\d{4}년\s*\d{1,2}월\s*\d{1,2}일', text):
+                        모집기간 = text
+                        break
+                
+                # 지역 정보 찾기 (ProgramCard_txt_detail 클래스 중 지역)
+                region_elems = soup.find_all('p', class_=re.compile('ProgramCard_txt_detail'))
+                for elem in region_elems:
+                    text = elem.get_text(strip=True)
+                    if text and not re.search(r'\d{4}년', text):  # 날짜가 아닌 텍스트
+                        region = text
+                        break
+                
+                # 댓글/설명 찾기 (카드 하단의 댓글 영역)
+                comment_elem = soup.find('div', class_=re.compile('inline-flex.*items-center.*mt-3'))
+                if comment_elem:
+                    comment_text = comment_elem.get_text(strip=True)
+                    if comment_text and len(comment_text) > 10:  # 의미있는 텍스트만
+                        상세설명 = comment_text
+                
+                # 모집상태
                 모집상태 = ""
-                dday_elem2 = detail_soup.find('span', string=re.compile(r'D-\d+|마감'))
-                if dday_elem2:
-                    모집상태 = dday_elem2.get_text(strip=True)
-                detail_url = driver.current_url
-                driver.back()
-                time.sleep(1.5)
+                if dday_elem:
+                    모집상태 = dday_elem.get_text(strip=True)
+                
                 card_data = {
                     'name': name,
                     'img_url': img_url,
-                    'detail_url': detail_url,
                     'region': region,
                     'dday': dday,
                     'applicants': applicants,
@@ -170,11 +138,13 @@ def crawl_monthler_real(max_count=100):
                     '지원금': 지원금,
                     '카테고리': 카테고리,
                     '상세설명': 상세설명,
-                    '연락처': 연락처,
+                    '연락처': "",
                     '모집상태': 모집상태,
                     'collected_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
                 data.append(card_data)
+                print(f"카드 {i+1} 처리 완료: {name}")
+                
             except Exception as e:
                 print(f"카드 {i+1} 처리 오류: {name if 'name' in locals() else ''}, 에러: {e}")
                 continue
