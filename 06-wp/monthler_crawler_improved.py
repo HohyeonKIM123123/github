@@ -65,17 +65,13 @@ def crawl_monthler_real(max_count=100):
                     img_url = f"https://www.monthler.kr{img_url}"
                 
                 # D-day, 지원자수, 지역(카드에서)
-                dday = None
+                dday = ""
                 applicants = None
                 region = ""
                 
                 dday_elem = soup.find('span', class_=re.compile('ProgramCard_dday'))
                 if dday_elem:
-                    dday_text = dday_elem.get_text(strip=True)
-                    if 'D-' in dday_text:
-                        dday = extract_int(dday_text)
-                    elif '마감' in dday_text:
-                        dday = 0
+                    dday = dday_elem.get_text(strip=True)
                 
                 applicants_elem = soup.find('div', class_=re.compile('ProgramCard_applicantsNumber'))
                 if applicants_elem:
