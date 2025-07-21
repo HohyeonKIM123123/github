@@ -97,6 +97,9 @@ def crawl_monthler_real(max_count=100):
                 subsidy_elem = soup.find('div', class_=re.compile('ProgramCard_txt_subsidy'))
                 if subsidy_elem:
                     지원금 = subsidy_elem.get_text(strip=True)
+                # 지원금이 없거나 숫자가 전혀 없는 경우에도 문자 그대로 저장
+                else:
+                    지원금 = ""
                 
                 # 모집기간 찾기 (ProgramCard_txt_detail 클래스 중 날짜 패턴)
                 detail_elems = soup.find_all('div', class_=re.compile('ProgramCard_txt_detail'))
@@ -155,7 +158,7 @@ def crawl_monthler_real(max_count=100):
 
 def main():
     print("=== 한달살러 프로그램 데이터 크롤링 시작 ===")
-    data = crawl_monthler_real(max_count=10)
+    data = crawl_monthler_real(max_count=100)
     df = pd.DataFrame(data)
     script_dir = os.path.dirname(os.path.abspath(__file__))
     output_file = os.path.join(script_dir, "monthler_processed.csv")

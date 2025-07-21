@@ -287,18 +287,28 @@ def preprocess_data(df):
 
 def extract_support_amount(support_text):
     """지원금 정보에서 금액 추출"""
-    if pd.isna(support_text) or support_text == '':
+    if pd.isna(support_text):
         return 0
-    
+    # numpy 배열 타입 방어
+    if isinstance(support_text, np.ndarray):
+        if len(support_text) > 0:
+            return extract_support_amount(support_text[0])
+        else:
+            return 0
+    text = str(support_text)
+    if text.strip() == '':
+        return 0
     # 숫자 추출
-    numbers = re.findall(r'[\d,]+', str(support_text))
-    if numbers:
-        # 쉼표 제거하고 숫자로 변환
-        amount = int(numbers[0].replace(',', ''))
-        # 만원 단위 처리
-        if '만원' in str(support_text):
-            amount *= 10000
-        return amount
+    numbers = re.findall(r'[\d,]+', text)
+    if numbers and numbers[0].strip() != '':
+        try:
+            amount = int(numbers[0].replace(',', ''))
+            # 만원 단위 처리
+            if '만원' in text:
+                amount *= 10000
+            return amount
+        except ValueError:
+            return 0
     return 0
 
 def clean_region(region_text):
