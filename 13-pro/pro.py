@@ -1,4 +1,30 @@
 import streamlit as st
+import subprocess
+import sys
+import os
+
+# 필요한 라이브러리 설치 (Streamlit Cloud에서 실행 시 필요)
+def install_packages():
+    try:
+        import selenium
+        import webdriver_manager
+    except ImportError:
+        st.info("필요한 라이브러리를 설치하는 중입니다. 잠시만 기다려주세요...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "selenium", "webdriver-manager", "pandas"])
+        st.success("라이브러리 설치가 완료되었습니다. 앱을 다시 시작합니다.")
+        st.rerun()
+        
+# 환경 확인 함수
+def is_streamlit_cloud():
+    """Streamlit Cloud 환경인지 확인"""
+    return os.environ.get('STREAMLIT_SHARING') == 'true' or os.environ.get('IS_STREAMLIT_CLOUD') == 'true'
+
+# 라이브러리 설치 함수 호출
+install_packages()
+
+# 필요한 라이브러리 임포트
+import pandas as pd
+import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -7,23 +33,34 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
 from webdriver_manager.chrome import ChromeDriverManager
-import pandas as pd
-import time
 
 # 슬라이더 관련 함수 제거 - 이제 크롤링 후 스트림릿에서 직접 필터링
 
 def fetch_dabang_rooms(region, room_type, deal_types, monthly_range, deposit_range, approval_date="전체", floor_options=[]):
     st.write("[1/9] 크롬 드라이버 실행 중...")
     options = webdriver.ChromeOptions()
-    # options.add_argument("--headless")  # 디버깅 시 주석
+    
+    # Streamlit Cloud 환경에서는 headless 모드 사용
+    if is_streamlit_cloud():
+        st.info("Streamlit Cloud 환경에서 실행 중입니다. Headless 모드로 실행합니다.")
+        options.add_argument("--headless")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--no-sandbox")
+    
     options.add_argument("--start-maximized")
     # 클릭 문제 해결을 위한 옵션 추가
     options.add_argument("--disable-popup-blocking")
     options.add_argument("--disable-notifications")
     options.add_argument("--disable-infobars")
     
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
+    try:
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=options)
+    except Exception as e:
+        st.error(f"크롬 드라이버 실행 실패: {e}")
+        st.error("이 앱은 로컬 환경에서만 실행 가능합니다. Streamlit Cloud에서는 웹 브라우저 접근이 제한됩니다.")
+        st.info("로컬에서 실행하려면 다음 명령어를 사용하세요: streamlit run pro.py")
+        return pd.DataFrame()
     wait = WebDriverWait(driver, 20)
 
     st.write("[2/9] 다방 접속 중...")
@@ -740,3 +777,5 @@ elif st.session_state.page == 'results':
             st.dataframe(filtered_df)
     else:
         st.warning("선택한 조건에 맞는 매물이 없습니다. 필터 조건을 변경해보세요.")
+
+    
