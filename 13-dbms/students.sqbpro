@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="students.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="2079"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><table title="sqlite_sequence" custom_title="0" dock_id="2" table="4,15:mainsqlite_sequence"/><dock_state state="000000ff00000000fd00000001000000020000023400000215fc0100000002fb000000160064006f0063006b00420072006f00770073006500310100000000000002340000000000000000fb000000160064006f0063006b00420072006f00770073006500320100000000000002340000015300ffffff000002340000000000000004000000040000000800000008fc00000000"/><default_encoding codec=""/><browse_table_settings/></tab_browse><tab_sql><sql name="SQL 1*">DROP table if EXISTS student;
+
+
+
+create table student(
+
+
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT,   --DB 인덱스 (학번,이나 주민번호가 아님), AUTOINCREMENT 1씩 자동 증가  
+
+    name TEXT NOT NULL, --WHEN you INSERT, if its null there is error 
+
+    age INTEGER NOT null,
+
+    grade TEXT NOT NULL,
+
+    profile_img TEXT, 
+
+	
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+
+
+);
+
+
+
+INSERT INTO student (name, age, grade)
+
+VALUES ('홍길동', 30, 'A+');
+
+
+
+INSERT INTO student (name, age, grade)
+
+VALUES ('김영희', 25, 'B+');
+
+
+
+INSERT INTO student (name, age, grade, created_at)
+
+VALUES ('이철수', 32, 'A', '2025-07-25');
+
+
+
+--modify data
+
+update student 
+
+set grade = 'D'
+
+WHERE name = '이철수' ;
+
+
+
+
+
+-- 
+
+-- DELETE FROM student
+
+-- WHERE name'이철수' ;
+
+
+
+SELECT * FROM student;
+
+
+
+
+
+SELECT name, grade 
+
+FROM student ;
+
+
+
+
+
+SELECT * FROM student
+
+WHERE age &gt;24 ;
+
+
+
+
+
+-- practice
+
+	-- 1. print the sudent name when only their grade is A
+
+	-- 2. print the student name when only id is 1
+
+	-- 3. print the student name when only their name include '수'
+
+	
+
+-- SELECT * FROM student
+
+-- WHERE grade = 'D' sSs
+
+
+
+-- SELECT * FROM student
+
+-- WHERE ID = '1' 
+
+
+
+-- SELECT * FROM student
+
+-- WHERE NAME LIKE '%철%';
+
+-- WHERE NAME LIKE '__철' ;   -----&gt; IF YOU WANNA FIND SOMEONE HAVE A '수' IN THE LAST OF THEIR NAME, YOU CAN USE IT LIKE THIS 
+
+SELECT * FROM student
+
+WHERE age BETWEEN 20 AND 30;
+
+
+
+
+
+--  IN () FUNCTION : include ~ then its true 
+
+--  in case of that name is 'HONG' or 'LEE'
+
+SELECT * FROM STUDENT
+
+WHERE NAME IN ('홍길동', '이철수') ;
+
+
+
+-- 정렬 (SORT) 
+
+-- 나이순으로 오름차순 정렬
+
+-- SELECT * FROM student 
+
+-- order by age asc ;
+
+-- 
+
+-- SELECT * FROM student 
+
+-- order by age desc ;
+
+-- 
+
+-- SELECT * FROM student 
+
+-- order by grade ASC, age desc ;
+
+-- 
+
+-- SELECT * FROM student
+
+-- LIMIT 2 ;
+
+-- 
+
+-- 
+
+-- SELECT * FROM student
+
+-- order created_at desc ;
+
+-- 
+
+-- 
+
+
+
+
+
+INSERT into student (name, age, grade)
+
+values ('아순신', 40, 'C+');
+
+
+
+INSERT into student (name, age, grade)
+
+values ('강감찬', 27, 'B+');
+
+
+
+INSERT into student (name, age, grade)
+
+values ('임꺽정', 30, 'A+');
+
+ 
+
+
+
+SELECT * FROM student
+
+where age &gt;25
+
+order BY age DESC ;
+
+
+
+SELECT * FROM student
+
+where grade = 'B+'
+
+ORDER BY created_at DESC
+
+LIMIT 1 ;
+
+
+
+SELECT * FROM student
+
+where NAME LIKE '%길%' OR NAME LIKE '%강%' ;
+
+
+
+
+
+
+
+
+
+-- GATHERING FUNC ( GROUP BY, HAVING STATE (CONDITION))
+
+-- CACULATE THE NUM OF STUDENTS EACH CLASS (COUNT () FUNC)
+
+SELECT GRADE, COUNT(*) AS '학년별-학생수'
+
+FROM student
+
+GROUP BY GRADE ;
+
+
+
+-- 학년별 평균 나이 구하기 (AVG)
+
+SELECT GRADE, COUNT (*) AS '학년별-학생수', AVG (AGE) 
+
+FROM STUDENT 
+
+GROUP BY GRADE ;
+
+
+
+
+
+--- 학년별 총 나이 합계 구하기 (SUM)
+
+
+
+
+
+SELECT GRADE, COUNT (*) AS '학년별-학생수', SUM(age) AS 학년별_나이합계
+
+FROM STUDENT 
+
+GROUP BY GRADE ;
+
+
+
+
+
+--GROUP (집계)에 대한 조건을 넣을 때 HAVING 절
+
+--학년별 학생수가 2명 이상
+
+SELECT GRADE , COUNT (*) AS '학년별_학생수'  
+
+FROM student
+
+GROUP BY  GRADE 
+
+HAVING count(*) &gt;=2 ;
+
+
+
+
+
+-- 집계함수의 종류 count sum avg min max
+
+
+
+select grade , count(*), Avg(age) as avg_age
+
+from student 
+
+group by grade
+
+having avg(age) = max (age) ;
+
+
+
+SELECT grade , max(age) as 'oldest'
+
+from student
+
+group by grade 
+
+having age = max(age) ;
+
+
+
+</sql><current_tab id="0"/></tab_sql></sqlb_project>

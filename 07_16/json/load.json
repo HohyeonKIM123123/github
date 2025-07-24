@@ -1,0 +1,17 @@
+[
+  {
+    "userId": 1,
+    "id": 1,
+    "title": "Meet with Lisa",
+    "completed": true
+  },
+  {
+    "userId": 1,
+    "id": 2,
+    "title": "Design a prototype",
+    "completed": false
+  }
+]
+
+
+// https://pynative.com/python-json-exercise/#h-exercise-2-access-the-value-of-key2-from-the-following-json
