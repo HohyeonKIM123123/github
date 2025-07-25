@@ -7,9 +7,28 @@ SQLite 기초 CRUD 예제
 """
 
 import sqlite3
+import csv
 from datetime import datetime
+import os
 
 db_path = r'C:\Users\ghgh2\OneDrive\바탕 화면\github\13-dbms\students.db'
+
+def clear_all_students():
+    """모든 학생 정보 삭제 (주의: 실제 데이터가 모두 삭제됩니다)"""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    cursor.execute('DELETE FROM students')
+    deleted_count = cursor.rowcount
+    
+    conn.commit()
+    conn.close()
+    
+    print(f"모든 학생 정보 삭제 완료: {deleted_count}명의 데이터가 삭제되었습니다.")
+    return True
+
+clear_all_students()
+
 def create_database():
     """데이터베이스 연결 및 테이블 생성"""
     conn = sqlite3.connect(db_path)
@@ -17,7 +36,7 @@ def create_database():
     
     # 학생 테이블 생성
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS students2 (
+        CREATE TABLE IF NOT EXISTS students (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             age INTEGER NOT NULL,
@@ -157,46 +176,125 @@ def search_students_by_name(name):
     
     return students
 
+def read_csv_file(file_path):
+    """CSV 파일 읽기"""
+    students = []
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            csv_reader = csv.DictReader(file)
+            for row in csv_reader:
+                students.append({
+                    'name': row['name'],
+                    'age': int(row['age']),
+                    'grade': row['grade']
+                })
+        print(f"CSV 파일 읽기 완료: {len(students)}명의 학생 정보")
+        return students
+    except FileNotFoundError:
+        print(f"파일을 찾을 수 없습니다: {file_path}")
+        return []
+    except Exception as e:
+        print(f"CSV 파일 읽기 중 오류 발생: {e}")
+        return []
+
+def insert_students_from_csv(students):
+    """CSV 데이터를 SQLite 테이블에 삽입"""
+    if not students:
+        print("삽입할 데이터가 없습니다.")
+        return False
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    success_count = 0
+    failed_count = 0
+    
+    for student in students:
+        try:
+            cursor.execute('''
+                INSERT INTO students (name, age, grade) 
+                VALUES (?, ?, ?)
+            ''', (student['name'], student['age'], student['grade']))
+            
+            student_id = cursor.lastrowid
+            print(f"학생 추가 완료 - ID: {student_id}, 이름: {student['name']}")
+            success_count += 1
+            
+        except Exception as e:
+            print(f"학생 추가 중 오류 발생 - 이름: {student['name']}, 오류: {e}")
+            failed_count += 1
+    
+    conn.commit()
+    conn.close()
+    
+    print(f"\n=== 삽입 결과 ===")
+    print(f"성공: {success_count}명")
+    print(f"실패: {failed_count}명")
+    
+    return success_count > 0
+
+def clear_all_students():
+    """모든 학생 정보 삭제 (주의: 실제 데이터가 모두 삭제됩니다)"""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    cursor.execute('DELETE FROM students')
+    deleted_count = cursor.rowcount
+    
+    conn.commit()
+    conn.close()
+    
+    print(f"모든 학생 정보 삭제 완료: {deleted_count}명의 데이터가 삭제되었습니다.")
+    return True
+
 def main():
-    """메인 함수 - CRUD 예제 실행"""
-    print("SQLite CRUD 예제 시작")
+    """메인 함수 - CSV 데이터 삽입 예제 실행"""
+    print("SQLite CSV 데이터 삽입 예제 시작")
     
     # 1. 데이터베이스 및 테이블 생성
     create_database()
     
-    # 2. 학생 정보 추가 (CREATE)
-    print("\n1. 학생 정보 추가 (CREATE)")
-    id1 = create_student("김철수", 20, "2학년")
-    id2 = create_student("이영희", 19, "1학년")
-    id3 = create_student("박민수", 21, "3학년")
-    id4 = create_student("최수진", 20, "2학년")
+    csv_file_path = r'C:\Users\ghgh2\OneDrive\바탕 화면\github\13-dbms\students_sample.csv'
     
-    # 3. 모든 학생 조회 (READ)
-    print("\n2. 모든 학생 조회 (READ)")
+    # 2. CSV 파일 읽기
+    print(f"\n1. CSV 파일 읽기: {csv_file_path}")
+    students = read_csv_file(csv_file_path)
+    
+    if not students:
+        print("CSV 파일을 읽을 수 없습니다. 프로그램을 종료합니다.")
+        return
+    
+    # 3. CSV 데이터 출력
+    print("\n2. CSV 데이터 미리보기")
+    for i, student in enumerate(students[:5], 1):  # 처음 5명만 출력
+        print(f"{i}. 이름: {student['name']}, 나이: {student['age']}, 학년: {student['grade']}")
+    if len(students) > 5:
+        print(f"... 외 {len(students) - 5}명")
+    
+    clear_all_students ()
+
+    # 4. 기존 데이터 확인
+    print("\n3. 기존 데이터 확인")
+    existing_students = read_all_students()
+    
+    # 5. CSV 데이터 삽입
+    print("\n4. CSV 데이터 삽입")
+    insert_success = insert_students_from_csv(students)
+    
+    if insert_success:
+        print("CSV 데이터 삽입이 완료되었습니다.")
+    else:
+        print("CSV 데이터 삽입이 실패했습니다.")
+    
+    # 6. 삽입 후 전체 데이터 확인
+    print("\n5. 삽입 후 전체 데이터 확인")
     read_all_students()
     
-    # 4. 특정 학생 조회 (READ)
-    print("\n3. 특정 학생 조회 (READ)")
-    read_student_by_id(id1)
-    
-    # 5. 학생 정보 수정 (UPDATE)
-    print("\n4. 학생 정보 수정 (UPDATE)")
-    update_student(id2, age=20, grade="2학년")
-    read_student_by_id(id2)
-    
-    # 6. 이름으로 학생 검색 (READ - 조건부)
-    print("\n5. 이름으로 학생 검색")
+    # 7. 이름으로 학생 검색 테스트
+    print("\n6. 이름으로 학생 검색 테스트")
     search_students_by_name("김")
     
-    # 7. 학생 정보 삭제 (DELETE)
-    print("\n6. 학생 정보 삭제 (DELETE)")
-    delete_student(all)
-    
-    # 8. 삭제 후 전체 목록 확인
-    print("\n7. 삭제 후 전체 목록 확인")
-    read_all_students()
-    
-    print("\nSQLite CRUD 예제 완료")
+    print("\nSQLite CSV 데이터 삽입 예제 완료")
 
 if __name__ == "__main__":
     main()
