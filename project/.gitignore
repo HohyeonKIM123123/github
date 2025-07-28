@@ -1,6 +1,5 @@
 # 환경변수 파일 (비밀번호 포함)
 .env
-project/.env
 
 # Python 관련
 __pycache__/
@@ -11,11 +10,6 @@ __pycache__/
 env/
 venv/
 .venv/
-
-# 데이터베이스 파일 (배포시에는 포함)
-# *.db
-# *.sqlite
-# *.sqlite3
 
 # IDE 관련
 .vscode/
@@ -32,9 +26,3 @@ venv/
 
 # Streamlit 관련
 .streamlit/
-
-# 테스트 파일들
-project/test_*.py
-project/debug_*.py
-project/manual_*.py
-project/check_*.py
